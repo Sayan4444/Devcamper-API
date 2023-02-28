@@ -1,4 +1,6 @@
 const mongoose = require('mongoose');
+const slugify = require('slugify');
+const geocoder = require('../utils/geocoder');
 
 const BootcampSchema = new mongoose.Schema(
     {
@@ -108,5 +110,36 @@ const BootcampSchema = new mongoose.Schema(
     //     toObject: { virtuals: true }
     // }
 );
+
+// Create bootcamp slug from the name
+BootcampSchema.pre('save', function (next) {
+    this.slug = slugify(this.name, { lower: true });
+    next();
+});
+
+// Geocode & create location field
+BootcampSchema.pre('save', async function (next) {
+    const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${this.address}&format=json&addressdetails=1`);
+
+    const data = await response.json();
+    console.log(data);
+    if (data.length > 0) {
+        const { lat, lon, address } = data[0];
+        const { road, city, state, postcode, country, country_code } = address;
+        const formattedAddress = `${road}, ${city}, ${state} ${postcode}, ${country}`;
+        this.location.formattedAddress = formattedAddress;
+        this.location.street = road;
+        this.location.city = city;
+        this.location.state = state;
+        this.location.zipcode = postcode;
+        this.location.country = country;
+        this.location.coordinates = [lat, lon];
+        this.location.address = undefined;
+
+    } else {
+        console.error(`Could not geocode address: ${address}`);
+    }
+    next();
+})
 
 module.exports = mongoose.model('Bootcamp', BootcampSchema);
