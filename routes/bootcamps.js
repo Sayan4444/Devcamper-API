@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const CourseRouter = require('./courses');
 const { protect, authorize } = require('../Middleware/auth')
 
 const { createBootcamps, deleteBootcamps, getBootcamps, updateBootcamps, getSingleBootcamp, getBootcampsInRadius, bootcampPhotoUpload } = require('../controller/bootcamps');
@@ -10,7 +9,11 @@ const advancedResults = require('../Middleware/advancedResults');
 // @route:/api/v1/bootcamps
 
 //Redirecting routes to another router
+const CourseRouter = require('./courses');
+const ReviewRouter = require('./reviews');
+
 router.use('/:bootcampId/courses', CourseRouter);
+router.use('/:bootcampId/reviews', ReviewRouter);
 
 router
     .route('/')
