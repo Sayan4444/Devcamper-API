@@ -106,7 +106,7 @@ exports.deleteReview = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse('Not authorized to update review'), 404)
     }
 
-    await Review.findByIdAndRemove(req.params.id, req.body)
+    await review.remove();
 
     res.status(201).json({
         success: true,
