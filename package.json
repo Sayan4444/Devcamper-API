@@ -4,7 +4,8 @@
   "description": "Devcamper backend api",
   "main": "server.js",
   "scripts": {
-    "dev": "nodemon server.js"
+    "dev": "NODE_ENV=development nodemon server.js",
+    "start": "NODE_ENV=production node server.js"
   },
   "keywords": [],
   "author": "Sayan Banerjee",

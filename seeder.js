@@ -73,4 +73,8 @@ const resetDB = async () => {
 
 if (process.argv[2] === '-i') importData();
 else if (process.argv[2] === '-d') deleteData();
-else if (process.argv[2] === '-a') resetDB();
+else if (process.argv[2] === '-r') resetDB();
+else {
+    console.log("Invalid command".red.inverse);
+    process.exit();
+}

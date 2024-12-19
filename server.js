@@ -77,6 +77,7 @@ app.use('/api/v1/users', users);
 app.use('/api/v1/reviews', reviews);
 //Handling error controller function
 app.use(errorHandler);
+console.log(process.env.NODE_ENV);
 
 //Running server
 const PORT = process.env.PORT;
@@ -85,5 +86,5 @@ const server = app.listen(PORT, () => console.log('Server running'.blue.bold));
 //Handling unhandled promise rejections
 process.on('unhandledRejection', (err, promise) => {
     console.log(`Error: ${err.message}`);
-    server.close(() => process.exit());
+    server.close(() => process.exit(1));
 })
