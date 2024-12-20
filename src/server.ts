@@ -1,17 +1,25 @@
-const express = require('express');
-const path = require('path')
-const colors = require('colors')
-const dotenv = require('dotenv');
-const morgan = require('morgan');
-const fileupload = require('express-fileupload');
-const cookieParser = require('cookie-parser');
-const mongoSanitize = require('express-mongo-sanitize')
-const helmet = require('helmet')
-const xss = require('xss-clean');
-const rateLimit = require('express-rate-limit');
-const hpp = require('hpp');
-const cors = require('cors');
-const errorHandler = require('./Middleware/error');
+import express from 'express';
+import path from 'path';
+import dotenv from 'dotenv';
+import morgan from 'morgan';
+import fileupload from 'express-fileupload';
+import cookieParser from 'cookie-parser';
+import mongoSanitize from 'express-mongo-sanitize';
+import helmet from 'helmet';
+import xss from 'xss-clean';
+import rateLimit from 'express-rate-limit';
+import hpp from 'hpp';
+import cors from 'cors';
+import errorHandler from './Middleware/error';
+
+import bootcamps from './routes/bootcamps';
+import courses from './routes/courses';
+import auth from './routes/auth';
+import users from './routes/users';
+import reviews from './routes/reviews';
+
+import connectDB from './db/connect';
+import mongoose from 'mongoose';
 
 const app = express();
 
@@ -44,18 +52,15 @@ app.use(limiter)
 app.use(hpp());
 
 //Load env variables
-dotenv.config({ path: './config/config.env' });
+// config({ path: '../.env' });
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 //Connecting database
-const connectDB = require('./config/db');
-connectDB();
+// connectDB();
+mongoose.connect(process.env.MONGO_URI as string)
+    .then(() => console.log("connected to mongoDB server".green.bold))
+    .catch((err) => console.log("not connected to mongo server".red.bold));
 
-//Load route files
-const bootcamps = require('./routes/bootcamps');
-const courses = require('./routes/courses');
-const auth = require('./routes/auth');
-const users = require('./routes/users');
-const reviews = require('./routes/reviews');
 
 //This console.log in method:status code: url
 if (process.env.NODE_ENV === 'development') {
@@ -85,6 +90,10 @@ const server = app.listen(PORT, () => console.log('Server running'.blue.bold));
 
 //Handling unhandled promise rejections
 process.on('unhandledRejection', (err, promise) => {
-    console.log(`Error: ${err.message}`);
+    if (err instanceof Error) {
+        console.log(`Error: ${err.message}`);
+    } else {
+        console.log(`Error: ${err}`);
+    }
     server.close(() => process.exit(1));
 })

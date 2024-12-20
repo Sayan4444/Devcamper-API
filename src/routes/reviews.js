@@ -1,10 +1,10 @@
 const express = require('express');
-const { protect, authorize } = require('../../Middleware/auth')
+const { protect, authorize } = require('../Middleware/auth')
 const { getReviews, getReview, addReview, updateReview, deleteReview } = require('../controller/review');
 
 const router = express.Router({ mergeParams: true });
 const Review = require('../models/Reviews');
-const advancedResults = require('../../Middleware/advancedResults');
+const advancedResults = require('../Middleware/advancedResults');
 
 router
     .route('/')
