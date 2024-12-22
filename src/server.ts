@@ -12,14 +12,10 @@ import hpp from 'hpp';
 import cors from 'cors';
 import errorHandler from './Middleware/error';
 
-import bootcamps from './routes/bootcamps';
-import courses from './routes/courses';
-import auth from './routes/auth';
-import users from './routes/users';
-import reviews from './routes/reviews';
-
 import type { Server, IncomingMessage, ServerResponse } from 'http';
 import Database from './db/connect';
+
+import { AuthRoutes, BootcampRoutes, CourseRoutes, ReviewRoutes, UserRoutes } from './routes';
 
 export default class ApiServer {
     private app: express.Application;
@@ -34,7 +30,6 @@ export default class ApiServer {
         this.mountRoutes();
         this.initializeErrorHandling();
     }
-
     private loadEnvVariables(): void {
         dotenv.config({ path: path.resolve(__dirname, '../.env') });
     }
@@ -68,11 +63,17 @@ export default class ApiServer {
     }
 
     private mountRoutes(): void {
-        this.app.use('/api/v1/bootcamps', bootcamps);
-        this.app.use('/api/v1/courses', courses);
-        this.app.use('/api/v1/auth', auth);
-        this.app.use('/api/v1/users', users);
-        this.app.use('/api/v1/reviews', reviews);
+        const authRoutes = new AuthRoutes();
+        const bootcampRoutes = new BootcampRoutes();
+        const courseRoutes = new CourseRoutes();
+        const userRoutes = new UserRoutes();
+        const reviewRoutes = new ReviewRoutes();
+
+        this.app.use('/api/v1/bootcamps', bootcampRoutes.getRouter());
+        this.app.use('/api/v1/courses', courseRoutes.getRouter());
+        this.app.use('/api/v1/auth', authRoutes.getRouter());
+        this.app.use('/api/v1/users', userRoutes.getRouter());
+        this.app.use('/api/v1/reviews', reviewRoutes.getRouter());
     }
 
     private initializeErrorHandling(): void {
