@@ -1,4 +1,6 @@
 import Server from "./server";
 
-const server = new Server();
-server.startServer();
+(async () => {
+    const server = new Server();
+    await server.startServer();
+})();

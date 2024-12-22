@@ -18,86 +18,8 @@ import auth from './routes/auth';
 import users from './routes/users';
 import reviews from './routes/reviews';
 
-import connectDB from './db/connect';
-import mongoose from 'mongoose';
-import { Server, IncomingMessage, ServerResponse } from 'http';
-
-// const app = express();
-
-// //Body parser
-// app.use(express.json());
-
-// //Cookie parser
-// app.use(cookieParser());
-
-// //Sanitize data
-// app.use(mongoSanitize());
-
-// //Set security headers
-// app.use(helmet());
-
-// //Prevent xss attacks(cross-site-scripting)
-// app.use(xss());
-
-// //Enable cors
-// app.use(cors());
-
-// // Apply the rate limiting middleware to all requests
-// const limiter = rateLimit({
-//     windowMs: 10 * 60 * 1000, // 10 minutes
-//     max: 100, // Limit each IP to 100 requests per `window` (here, per 10 minutes)
-// })
-// app.use(limiter)
-
-// //Prevent http param pollution
-// app.use(hpp());
-
-// //Load env variables
-// // config({ path: '../.env' });
-// dotenv.config({ path: path.resolve(__dirname, '../.env') });
-
-// //Connecting database
-// // connectDB();
-// mongoose.connect(process.env.MONGO_URI as string)
-//     .then(() => console.log("connected to mongoDB server".green.bold))
-//     .catch((err) => console.log("not connected to mongo server".red.bold));
-
-
-// //This console.log in method:status code: url
-// if (process.env.NODE_ENV === 'development') {
-//     app.use(morgan('dev'));
-// }
-
-// //File Uploading
-// app.use(fileupload());
-
-// //Set static folder
-// // app.use(express.static(path.join(__dirname, 'public')));
-// app.use(express.static('public'));
-
-// //Mount route files
-// app.use('/api/v1/bootcamps', bootcamps);
-// app.use('/api/v1/courses', courses);
-// app.use('/api/v1/auth', auth);
-// app.use('/api/v1/users', users);
-// app.use('/api/v1/reviews', reviews);
-// //Handling error controller function
-// app.use(errorHandler);
-// console.log(process.env.NODE_ENV);
-
-// //Running server
-// const PORT = process.env.PORT;
-// const server = app.listen(PORT, () => console.log('Server running'.blue.bold));
-
-// //Handling unhandled promise rejections
-// process.on('unhandledRejection', (err, promise) => {
-//     if (err instanceof Error) {
-//         console.log(`Error: ${err.message}`);
-//     } else {
-//         console.log(`Error: ${err}`);
-//     }
-//     server.close(() => process.exit(1));
-// })
+import type { Server, IncomingMessage, ServerResponse } from 'http';
+import Database from './db/connect';
 
 export default class ApiServer {
     private app: express.Application;
@@ -108,7 +30,6 @@ export default class ApiServer {
         this.port = process.env.PORT || 5000;
 
         this.loadEnvVariables();
-        this.connectDatabase();
         this.initializeMiddlewares();
         this.mountRoutes();
         this.initializeErrorHandling();
@@ -118,10 +39,9 @@ export default class ApiServer {
         dotenv.config({ path: path.resolve(__dirname, '../.env') });
     }
 
-    private connectDatabase(): void {
-        mongoose.connect(process.env.MONGO_URI as string)
-            .then(() => console.log("connected to mongoDB server".green.bold))
-            .catch((err) => console.log("not connected to mongo server".red.bold));
+    private async connectDatabase(): Promise<void> {
+        const db = new Database(process.env.MONGO_URI as string);
+        await db.connect();
     }
 
     private initializeMiddlewares(): void {
@@ -169,7 +89,8 @@ export default class ApiServer {
             server.close(() => process.exit(1));
         });
     }
-    public startServer(): void {
+    public async startServer(): Promise<void> {
+        await this.connectDatabase();
         const server = this.app.listen(this.port, () => console.log(`Server running on port ${this.port}`.blue.bold));
 
         this.unhandledRejectionEvenetHandler(server); //Handling unhandled promise rejections
