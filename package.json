@@ -6,7 +6,9 @@
   "scripts": {
     "build": "npx tsc",
     "dev": "NODE_ENV=development nodemon src/index.ts",
-    "start": "NODE_ENV=production node dist/index.js"
+    "start": "npm run build && NODE_ENV=production node dist/index.js",
+    "seeder:import": "ts-node ./src/seeder -i",
+    "seeder:delete": "ts-node ./src/seeder -d"
   },
   "keywords": [],
   "author": "Sayan Banerjee",

@@ -20,6 +20,7 @@ import { AuthRoutes, BootcampRoutes, CourseRoutes, ReviewRoutes, UserRoutes } fr
 export default class ApiServer {
     private app: express.Application;
     private port: string | number;
+    private db: Database;
 
     constructor() {
         this.app = express();
@@ -29,14 +30,11 @@ export default class ApiServer {
         this.initializeMiddlewares();
         this.mountRoutes();
         this.initializeErrorHandling();
+
+        this.db = new Database(process.env.MONGO_URI as string);
     }
     private loadEnvVariables(): void {
         dotenv.config({ path: path.resolve(__dirname, '../.env') });
-    }
-
-    private async connectDatabase(): Promise<void> {
-        const db = new Database(process.env.MONGO_URI as string);
-        await db.connect();
     }
 
     private initializeMiddlewares(): void {
@@ -63,9 +61,9 @@ export default class ApiServer {
     }
 
     private mountRoutes(): void {
-        const authRoutes = new AuthRoutes();
         const bootcampRoutes = new BootcampRoutes();
         const courseRoutes = new CourseRoutes();
+        const authRoutes = new AuthRoutes();
         const userRoutes = new UserRoutes();
         const reviewRoutes = new ReviewRoutes();
 
@@ -90,11 +88,32 @@ export default class ApiServer {
             server.close(() => process.exit(1));
         });
     }
+
+    private async closeDBConnectionEventHandlers(): Promise<void> {
+        // Handle nodemon restarts
+        process.once('SIGUSR2', async () => {
+            await this.db.disconnect();
+            process.kill(process.pid, 'SIGUSR2');
+        });
+
+        // Handle app termination
+        process.on('SIGINT', async () => {
+            await this.db.disconnect();
+            process.exit(0);
+        });
+
+        process.on('SIGTERM', async () => {
+            await this.db.disconnect();
+            process.exit(0);
+        });
+    }
+
     public async startServer(): Promise<void> {
-        await this.connectDatabase();
+        await this.db.connect();
         const server = this.app.listen(this.port, () => console.log(`Server running on port ${this.port}`.blue.bold));
 
         this.unhandledRejectionEvenetHandler(server); //Handling unhandled promise rejections
+        await this.closeDBConnectionEventHandlers(); //Handling close db connection event handlers
 
     }
 }

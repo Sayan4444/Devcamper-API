@@ -18,4 +18,19 @@ export default class Database {
             process.exit(1);
         }
     }
+
+    public async disconnect(): Promise<void> {
+        try {
+            if (mongoose.connection.readyState === 0) {
+                console.log("No active MongoDB connection to disconnect".yellow.bold);
+                return;
+            }
+            await mongoose.disconnect();
+            console.log("Disconnected from MongoDB server".yellow.bold);
+        } catch (err) {
+            console.log((err as Error).message);
+            console.log("Error disconnecting from MongoDB server".red.bold);
+        }
+    }
+
 }
