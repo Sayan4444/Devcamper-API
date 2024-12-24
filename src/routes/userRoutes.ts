@@ -10,7 +10,7 @@ export default class UserRoutes extends BaseRoutes {
     }
     protected initializeRoutes(): void {
         this.router.use(protect);
-        this.router.use(authorize('admin'));
+        // this.router.use(authorize('admin'));
 
         this.router
             .route('/')

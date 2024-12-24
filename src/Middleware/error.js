@@ -3,7 +3,6 @@ const ErrorResponse = require("../utils/errorResponse");
 const errorHandler = (err, req, res, next) => {
     // console.error("Error name".red, err.name);
 
-
     let error = { message: err.message, statusCode: err.statusCode }
 
     //Mongoose bad object ID
