@@ -1,9 +1,16 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
+import mongoose, { Model, Schema } from 'mongoose';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+import IUser from '../types/User';
 
-const UserSchema = new mongoose.Schema({
+export interface IUserDocument extends IUser, Document {
+    getSignedJwtToken: () => string;
+    matchPassword: (enteredPassword: string) => Promise<boolean>;
+    getResetPasswordToken: () => string;
+}
+
+const UserSchema: Schema<IUserDocument> = new mongoose.Schema({
     name: {
         type: String,
         required: [true, 'Please add a name']
@@ -37,29 +44,29 @@ const UserSchema = new mongoose.Schema({
 });
 
 //Encrypt password using bcrypt
-UserSchema.pre('save', async function (next) {
-    if (!this.isModified('password')) {
-        next();
-    }
+UserSchema.pre<IUserDocument>('save', async function (next) {
+    // if (!this.isModified('password')) {
+    //     next();
+    // }
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
     next();
 })
 
 //Returning jwt token against the USER document ID
-UserSchema.methods.getSignedJwtToken = function () {
-    return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
-        expiresIn: process.env.JWT_EXPIRE
+UserSchema.methods.getSignedJwtToken = function (): string {
+    return jwt.sign({ id: this._id }, process.env.JWT_SECRET as string, {
+        expiresIn: process.env.JWT_EXPIRE as string
     });
 }
 
 //Match user entered password to hashed password in database
-UserSchema.methods.matchPassword = async function (enteredPassword) {
+UserSchema.methods.matchPassword = async function (enteredPassword: string): Promise<boolean> {
     return await bcrypt.compare(enteredPassword, this.password)
 }
 
 //Generate and hash token
-UserSchema.methods.getResetPasswordToken = function () {
+UserSchema.methods.getResetPasswordToken = function (): string {
     // Generate token
     const resetToken = crypto.randomBytes(32).toString('hex');
     this.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
@@ -67,5 +74,5 @@ UserSchema.methods.getResetPasswordToken = function () {
     return resetToken;
 }
 
-const User = mongoose.model('User', UserSchema);
-module.exports = User;
+const User: Model<IUserDocument> = mongoose.model<IUserDocument>('User', UserSchema);
+export default User;
