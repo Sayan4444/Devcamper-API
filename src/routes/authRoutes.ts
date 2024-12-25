@@ -1,5 +1,4 @@
 import { register, login, getMe, forgotPassword, resetPassword, updateDetails, updatePassword, logout } from '../controller/auth';
-import { protect } from '../Middleware/auth';
 import BaseRoutes from './BaseRoutes';
 
 export default class AuthRoutes extends BaseRoutes {
@@ -7,6 +6,8 @@ export default class AuthRoutes extends BaseRoutes {
         super();
     }
     protected initializeRoutes(): void {
+        const { protect } = this.authMiddleware;
+
         this.router.post('/register', register);
         this.router.post('/login', login);
         this.router.get('/logout', logout);

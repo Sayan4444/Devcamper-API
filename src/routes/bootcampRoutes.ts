@@ -1,5 +1,3 @@
-import express, { Router } from 'express';
-import { protect, authorize } from '../Middleware/auth';
 import { createBootcamps, deleteBootcamps, getBootcamps, updateBootcamps, getSingleBootcamp, getBootcampsInRadius, bootcampPhotoUpload } from '../controller/bootcamps';
 import Bootcamp from '../models/Bootcamp';
 import advancedResults from '../Middleware/advancedResults';
@@ -12,19 +10,21 @@ export default class BootcampRoutes extends BaseRoutes {
         super();
     }
     protected initializeRoutes(): void {
+        const { authorize, protect } = this.authMiddleware;
+
         this.router.use('/:bootcampId/courses', new CourseRoutes().getRouter());
         this.router.use('/:bootcampId/reviews', new ReviewRouter().getRouter());
 
         this.router
             .route('/')
             .get(advancedResults(Bootcamp, 'courses'), getBootcamps)
-            .post(protect, authorize('publisher', 'admin'), createBootcamps);
+            .post(protect, authorize(['publisher', 'admin']), createBootcamps);
 
         this.router
             .route('/:id')
             .get(getSingleBootcamp)
-            .put(protect, authorize('publisher', 'admin'), updateBootcamps)
-            .delete(protect, authorize('publisher', 'admin'), deleteBootcamps);
+            .put(protect, authorize(['publisher', 'admin']), updateBootcamps)
+            .delete(protect, authorize(['publisher', 'admin']), deleteBootcamps);
 
         this.router
             .route('/radius/:zipcode/:distance')
@@ -32,6 +32,6 @@ export default class BootcampRoutes extends BaseRoutes {
 
         this.router
             .route('/:id/photo')
-            .put(protect, authorize('publisher', 'admin'), bootcampPhotoUpload);
+            .put(protect, authorize(['publisher', 'admin']), bootcampPhotoUpload);
     }
 }

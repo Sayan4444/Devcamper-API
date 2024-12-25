@@ -82,7 +82,7 @@ import mongoose, { Model, Schema, Document } from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import IUser from '../types/User';
+import IUser from '../types/global/User';
 
 export interface IUserDocument extends IUser, Document {
     getSignedJwtToken: () => string;
@@ -162,7 +162,7 @@ class UserModel {
     }
 
     public static getInstance(): UserModel {
-        if (this.instance === null) {
+        if (!this.instance) {
             this.instance = new UserModel();
         }
         return this.instance;
