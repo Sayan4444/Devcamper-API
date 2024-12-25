@@ -4,7 +4,6 @@ import User from '../models/User';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { Request, Response, NextFunction } from "express";
 
-
 export default class AuthMiddleware {
     // Protect routes middleware
     public protect = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
@@ -20,7 +19,6 @@ export default class AuthMiddleware {
         if (!token) {
             return next(new ErrorResponse('Not authorized to access this route', 401));
         }
-        let val: IUser;
         try {
             // Verify token
             const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload;
@@ -30,7 +28,7 @@ export default class AuthMiddleware {
             if (!user) {
                 return next(new ErrorResponse('User not found', 404));
             }
-            req.user = user as IUser; // Attach user to request
+            req.user = user; // Attach user to request
             next();
         } catch (error) {
             return next(new ErrorResponse('Not authorized to access this route', 401));

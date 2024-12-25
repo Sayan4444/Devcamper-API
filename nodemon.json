@@ -6,5 +6,5 @@
     "ignore": [
         "node_modules"
     ],
-    "exec": "ts-node --project tsconfig.json ./src/index.ts"
+    "exec": "ts-node ./src/index.ts"
 }
