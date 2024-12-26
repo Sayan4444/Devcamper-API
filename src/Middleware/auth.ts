@@ -5,6 +5,11 @@ import jwt, { JwtPayload } from 'jsonwebtoken';
 import { Request, Response, NextFunction } from "express";
 
 export default class AuthMiddleware {
+    private isUserFound(user: IUser) {
+        if (!user) {
+            return new ErrorResponse('User not found', 404);
+        }
+    }
     // Protect routes middleware
     public protect = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
         let token: string | undefined;
@@ -19,27 +24,24 @@ export default class AuthMiddleware {
         if (!token) {
             return next(new ErrorResponse('Not authorized to access this route', 401));
         }
-        try {
-            // Verify token
-            const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload;
+        // Verify token
+        const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload;
+        // Fetch the user and attach it to the request
+        const user = await User.findById(decoded.id) as IUser;
+        this.isUserFound(user);
 
-            // Fetch the user and attach it to the request
-            const user = await User.findById(decoded.id);
-            if (!user) {
-                return next(new ErrorResponse('User not found', 404));
-            }
-            req.user = user; // Attach user to request
-            next();
-        } catch (error) {
-            return next(new ErrorResponse('Not authorized to access this route', 401));
-        }
+        req.user = user; // Attach user to request
+        next();
     });
 
     // Authorize specific roles middleware
     public authorize = (roles: string[]) => {
         return asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-            const user = req.user as IUser;
+            const user = req.user;
 
+            if (!user) {
+                return next(new ErrorResponse('User not found', 404));
+            }
             // Check if the user's role is authorized
             if (!roles.includes(user.role)) {
                 return next(new ErrorResponse(`User role ${user.role} is unauthorized to access this route`, 403));

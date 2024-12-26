@@ -9,7 +9,6 @@ const Bootcamp = require('../models/Bootcamp');
 // @access Public
 
 exports.getReviews = asyncHandler(async (req, res, next) => {
-    console.log('hit');
     if (req.params.bootcampId) {
         const review = await Review.find({ bootcamp: req.params.bootcampId });
         return res.status(200).json({

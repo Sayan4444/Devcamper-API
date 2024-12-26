@@ -1,5 +1,6 @@
 declare global {
     interface IUser {
+        id: string;
         name: string;
         email: string;
         role: 'user' | 'publisher';

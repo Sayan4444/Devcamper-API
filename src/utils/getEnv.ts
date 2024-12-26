@@ -1,20 +1,29 @@
-type ReturnType = 'string' | 'number';
+class EnvHelper {
+    private throwError(message: string): void {
+        console.log(message.red);
+        process.exit(1);
+    }
 
-export default function getEnv(token: string, returnType: ReturnType = 'string'): string | number | null {
-    try {
+    public getEnvStr(token: string): string {
         const decoded = process.env[token];
         if (!decoded) {
-            return null;
+            this.throwError(`${token} not found in environment variables`);
         }
+        return decoded!;
+    }
 
-        if (returnType === 'number' && !isNaN(Number(decoded))) {
-            return Number(decoded);
-        } else if (returnType === 'string') {
-            return decoded;
-        } else {
-            return null;
+    public getEnvNum(token: string): number {
+        const decoded = process.env[token];
+        if (!decoded) {
+            this.throwError(`${token} not found in environment variables`);
         }
-    } catch (error) {
-        return null;
+        const num = Number(decoded);
+        if (isNaN(num)) {
+            throw new Error(`Environment variable ${token} is not a valid number`);
+        }
+        return num;
     }
 }
+
+const envHelper = new EnvHelper();
+export default envHelper;

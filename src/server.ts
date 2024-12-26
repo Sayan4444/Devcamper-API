@@ -16,6 +16,7 @@ import type { Server, IncomingMessage, ServerResponse } from 'http';
 import Database from './db/connect';
 
 import { AuthRoutes, BootcampRoutes, CourseRoutes, ReviewRoutes, UserRoutes } from './routes';
+import envHelper from './utils/getEnv';
 
 export default class ApiServer {
     private app: express.Application;
@@ -24,14 +25,15 @@ export default class ApiServer {
 
     constructor() {
         this.app = express();
-        this.port = process.env.PORT || 5000;
+        this.port = envHelper.getEnvNum('PORT');
 
         this.loadEnvVariables();
         this.initializeMiddlewares();
         this.mountRoutes();
-        this.initializeErrorHandling();
 
-        this.db = new Database(process.env.MONGO_URI as string);
+        this.db = new Database(envHelper.getEnvStr('MONGO_URI'));
+
+        this.initializeErrorHandling();
     }
     private loadEnvVariables(): void {
         dotenv.config({ path: path.resolve(__dirname, '../.env') });
@@ -52,7 +54,7 @@ export default class ApiServer {
         this.app.use(limiter); // Apply the rate limiting middleware to all requests
         this.app.use(hpp()); //Prevent http param pollution
 
-        if (process.env.NODE_ENV === 'development') {
+        if (envHelper.getEnvStr("NODE_ENV") === 'development') {
             this.app.use(morgan('dev'));
         }
 

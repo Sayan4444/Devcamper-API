@@ -1,19 +1,20 @@
-const ErrorResponse = require('../utils/errorResponse');
-const crypto = require('crypto')
-const asyncHandler = require('../Middleware/async');
-const User = require('../models/User');
-const sendEmail = require('../utils/sendEmail');
+import ErrorResponse from '../utils/errorResponse';
+import crypto from 'crypto';
+import asyncHandler from '../Middleware/async';
+import User, { IUserDocument } from '../models/User';
+import sendEmail from '../utils/sendEmail';
+import { Request, Response, NextFunction, CookieOptions } from 'express';
+import envHelper from '../utils/getEnv';
 
 // @desc   Register user
 // @route  POST /api/v1/auth/register
 // @access Public
 
-exports.register = asyncHandler(async (req, res, next) => {
+export const register = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const { name, email, password, role } = req.body;
 
     //Create user
     const user = await User.create({ name, email, password, role })
-
     sendTokenResponse(user, 200, res);
 });
 
@@ -21,7 +22,7 @@ exports.register = asyncHandler(async (req, res, next) => {
 // @route  POST /api/v1/auth/login
 // @access Public
 
-exports.login = asyncHandler(async (req, res, next) => {
+export const login = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const { email, password } = req.body;
 
     //Validate email and password
@@ -48,7 +49,7 @@ exports.login = asyncHandler(async (req, res, next) => {
 // @route  POST /api/v1/auth/logout
 // @access Private
 
-exports.logout = asyncHandler(async (req, res, next) => {
+export const logout = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     res.clearCookie('token', { httpOnly: true, secure: false });
     res.status(200).json({
         success: true,
@@ -60,7 +61,7 @@ exports.logout = asyncHandler(async (req, res, next) => {
 // @route  POST /api/v1/auth/login
 // @access Private
 
-exports.getMe = asyncHandler(async (req, res, next) => {
+export const getMe = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     res.status(200).json({
         success: true,
         data: req.user
@@ -72,12 +73,12 @@ exports.getMe = asyncHandler(async (req, res, next) => {
 // @route  PUT /api/v1/auth/updatedetails
 // @access Private
 
-exports.updateDetails = asyncHandler(async (req, res, next) => {
+export const updateDetails = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const fieldsToUpdate = {
         name: req.body.name,
         email: req.body.email,
     }
-    const user = await User.findByIdAndUpdate(req.user.id, fieldsToUpdate, {
+    const user = await User.findByIdAndUpdate(req.user!.id, fieldsToUpdate, {
         new: true,
         runValidators: true
     })
@@ -92,12 +93,12 @@ exports.updateDetails = asyncHandler(async (req, res, next) => {
 // @route  POST /api/v1/auth/updatepassword
 // @access Private
 
-exports.updatePassword = asyncHandler(async (req, res, next) => {
-    const user = await User.findById(req.user.id).select('password');
+export const updatePassword = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const user: IUserDocument = (await User.findById(req.user!.id).select('password'))!;
 
     //Check current password
     if (!await user.matchPassword(req.body.currentPassword)) {
-        return next(new ErrorResponse('Password is incorrent'), 401);
+        return next(new ErrorResponse('Password is incorrent', 401));
     }
 
     user.password = req.body.newPassword;
@@ -110,7 +111,7 @@ exports.updatePassword = asyncHandler(async (req, res, next) => {
 // @route  POST /api/v1/auth/forgotpassword
 // @access Public
 
-exports.forgotPassword = asyncHandler(async (req, res, next) => {
+export const forgotPassword = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     // Get user based on POSTED email
     const user = await User.findOne({ email: req.body.email })
 
@@ -141,7 +142,7 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
         user.resetPasswordToken = undefined;
         user.resetPasswordExpire = undefined;
         await user.save({ validateBeforeSave: false });
-        return next(new ErrorResponse('Email could not be send'), 500);
+        return next(new ErrorResponse('Email could not be send', 500));
     }
 })
 
@@ -149,7 +150,7 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
 // @route  POST /api/v1/auth/resetpassword/:resettoken
 // @access Public
 
-exports.resetPassword = asyncHandler(async (req, res, next) => {
+export const resetPassword = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     console.log('hit', req.params.resettoken);
     //Get hashed token
     const resetToken = req.params.resettoken;
@@ -161,7 +162,7 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
     })
 
     if (!user) {
-        return next(new ErrorResponse('Invalid token'), 400);
+        return next(new ErrorResponse('Invalid token', 400));
     }
 
     //Set new password
@@ -173,12 +174,12 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
 })
 
 //Get token from model,create cookie and send response
-const sendTokenResponse = (user, statusCode, res) => {
+const sendTokenResponse = (user: IUserDocument, statusCode: number, res: Response) => {
     //Create token
     const token = user.getSignedJwtToken();
 
-    const options = {
-        expires: new Date(Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000),
+    const options: CookieOptions = {
+        expires: new Date(Date.now() + envHelper.getEnvNum("JWT_COOKIE_EXPIRE") * 24 * 60 * 60 * 1000),
         httpOnly: true,
     }
     if (process.env.NODE_ENV === 'Production') {
