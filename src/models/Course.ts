@@ -1,4 +1,5 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
+import Bootcamp from './Bootcamp';
 
 const CourseSchema = new mongoose.Schema({
     title: {
@@ -32,12 +33,12 @@ const CourseSchema = new mongoose.Schema({
         default: Date.now
     },
     bootcamp: {
-        type: mongoose.Schema.ObjectId,
+        type: mongoose.Types.ObjectId,
         ref: 'Bootcamp',
         required: true
     },
     user: {
-        type: mongoose.Schema.ObjectId,
+        type: mongoose.Types.ObjectId,
         ref: 'User',
         required: true
     },
@@ -56,7 +57,7 @@ CourseSchema.statics.getAverageCost = async function (bootcampId) {
                 }
             }
         ])
-        await this.model('Bootcamp').findByIdAndUpdate(bootcampId, {
+        await Bootcamp.findByIdAndUpdate(bootcampId, {
             averageCost: Math.ceil(obj[0].averageCost)
         }, {
             new: true,

@@ -2,6 +2,8 @@ import mongoose, { Model, Schema, Document } from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import IUser from '../types/models/User';
+import envHelper from '../utils/getEnv';
 
 export interface IUserDocument extends Omit<IUser, 'id'>, Document {
     getSignedJwtToken: () => string;
@@ -10,7 +12,7 @@ export interface IUserDocument extends Omit<IUser, 'id'>, Document {
 }
 
 class UserModel {
-    private userSchema: Schema<IUserDocument>;
+    private userSchema;
     private static instance: UserModel;
 
     constructor() {
@@ -46,38 +48,56 @@ class UserModel {
                 default: Date.now
             }
         });
-
-        this.userSchema.pre<IUserDocument>('save', this.encryptPassword);
-        this.userSchema.methods.getSignedJwtToken = this.getSignedJwtToken;
-        this.userSchema.methods.matchPassword = this.matchPassword;
-        this.userSchema.methods.getResetPasswordToken = this.getResetPasswordToken;
+        this.hookInit();
+        this.methodInit();
     }
 
-    private async encryptPassword(this: IUserDocument, next: Function) {
-        const salt = await bcrypt.genSalt(10);
-        this.password = await bcrypt.hash(this.password, salt);
-        next();
+    private hookInit() {
+        this.encryptPassword(); //Encrypt password using bcrypt
     }
 
-    private getSignedJwtToken(this: IUserDocument,): string {
-        return jwt.sign({ id: this._id }, process.env.JWT_SECRET as string, {
-            expiresIn: process.env.JWT_EXPIRE as string
-        });
+    private methodInit() {
+        this.getSignedJwtToken();
+        this.matchPassword();
+        this.getResetPasswordToken();
     }
 
-    private async matchPassword(this: IUserDocument, enteredPassword: string): Promise<boolean> {
-        return await bcrypt.compare(enteredPassword, this.password);
+    private encryptPassword(): void {
+        this.userSchema.pre('save', async function (next) {
+            if (!this.isModified('password')) {
+                next();
+            }
+            const salt = await bcrypt.genSalt(10);
+            this.password = await bcrypt.hash(this.password, salt);
+            next();
+        })
     }
 
-    private getResetPasswordToken(this: IUserDocument,): string {
-        const resetToken = crypto.randomBytes(32).toString('hex');
-        this.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-        this.resetPasswordExpire = new Date(Date.now() + 10 * 60 * 1000);
-        return resetToken;
+    private getSignedJwtToken(): void {
+        this.userSchema.methods.getSignedJwtToken = function () {
+            return jwt.sign({ id: this._id }, envHelper.getEnvStr("JWT_SECRET"), {
+                expiresIn: envHelper.getEnvStr("JWT_EXPIRE")
+            });
+        }
     }
 
-    public getModel(): Model<IUserDocument> {
-        return mongoose.model<IUserDocument>('User', this.userSchema);
+    private matchPassword(): void {
+        this.userSchema.methods.matchPassword = async function (enteredPassword: string) {
+            return await bcrypt.compare(enteredPassword, this.password)
+        }
+    }
+
+    private getResetPasswordToken(): void {
+        this.userSchema.methods.getResetPasswordToken = function () {
+            const resetToken = crypto.randomBytes(32).toString('hex');
+            this.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+            this.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
+            return resetToken;
+        }
+    }
+
+    public getModel() {
+        return mongoose.model('User', this.userSchema);
     }
 
     public static getInstance(): UserModel {
@@ -88,5 +108,5 @@ class UserModel {
     }
 }
 
-const user = UserModel.getInstance().getModel();
-export default user;
+const User = UserModel.getInstance().getModel();
+export default User;
