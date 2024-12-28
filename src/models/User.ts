@@ -1,22 +1,30 @@
-import mongoose, { Model, Schema, Document } from 'mongoose';
+import mongoose, { Model, Schema, Document, model } from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import IUser from '../types/models/User';
 import envHelper from '../utils/getEnv';
 
-export interface IUserDocument extends Omit<IUser, 'id'>, Document {
+interface IUserMethods {
     getSignedJwtToken: () => string;
     matchPassword: (enteredPassword: string) => Promise<boolean>;
     getResetPasswordToken: () => string;
 }
 
+type UserModelType = Model<IUser, {}, IUserMethods>;
+
 class UserModel {
     private userSchema;
     private static instance: UserModel;
 
-    constructor() {
-        this.userSchema = new mongoose.Schema({
+    private constructor() {
+        this.userSchema = this.getSchema();
+        this.hookInit();
+        this.methodInit();
+    }
+
+    private getSchema() {
+        return new Schema<IUser, UserModel, IUserMethods>({
             name: {
                 type: String,
                 required: [true, 'Please add a name']
@@ -48,8 +56,6 @@ class UserModel {
                 default: Date.now
             }
         });
-        this.hookInit();
-        this.methodInit();
     }
 
     private hookInit() {
@@ -97,7 +103,7 @@ class UserModel {
     }
 
     public getModel() {
-        return mongoose.model('User', this.userSchema);
+        return model<IUser, UserModelType>('User', this.userSchema);
     }
 
     public static getInstance(): UserModel {
@@ -107,6 +113,5 @@ class UserModel {
         return this.instance;
     }
 }
-
 const User = UserModel.getInstance().getModel();
 export default User;

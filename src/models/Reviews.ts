@@ -2,7 +2,7 @@ import mongoose, { Model, Schema } from 'mongoose';
 import IReview from '../types/models/Review';
 import Bootcamp from './Bootcamp';
 
-interface ReviewModel extends Model<IReview> {
+interface IReviewModel extends Model<IReview> {
     getAverageRating(bootcampId: string): Promise<void>;
 }
 
@@ -10,8 +10,15 @@ class ReviewModel {
     private reviewSchema;
     private static instance: ReviewModel;
 
-    constructor() {
-        this.reviewSchema = new Schema<IReview, ReviewModel>({
+    private constructor() {
+        this.reviewSchema = this.getSchema();
+        this.addIndexing();
+        this.staticsInit();
+        this.hookInit();
+    }
+
+    private getSchema() {
+        return new Schema<IReview, IReviewModel>({
             title: {
                 type: String,
                 trim: true,
@@ -43,12 +50,7 @@ class ReviewModel {
                 required: true
             },
         });
-
-        this.addIndexing();
-        this.staticsInit();
-        this.hookInit();
     }
-
     //Prevent user from submitting more than one review per bootcamp
     private addIndexing() {
         this.reviewSchema.index({ bootcamp: 1, user: 1 }, { unique: true });
@@ -91,7 +93,7 @@ class ReviewModel {
     }
 
     public getModel() {
-        return mongoose.model<IReview, ReviewModel>('Review', this.reviewSchema);
+        return mongoose.model<IReview, IReviewModel>('Review', this.reviewSchema);
     }
 
     public static getInstance(): ReviewModel {
