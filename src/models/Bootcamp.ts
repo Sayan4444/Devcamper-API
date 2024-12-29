@@ -1,21 +1,19 @@
 import { bgCyan, bgRed, bgGreen } from 'colors';
-import mongoose, { Schema } from 'mongoose';
+import mongoose, { Model, Schema } from 'mongoose';
 import slugify from 'slugify';
 import Cource from './Course';
 import IBootcamp from '../types/models/Bootcamp';
+import AbstractModel from './AbstractModel';
 
-class BootcampModel {
-    private bootcampSchema;
-    private bootcampModel;
-    private static instance: BootcampModel;
-
+class BootcampModelBuilder extends AbstractModel<IBootcamp, Model<IBootcamp>, {}> {
+    private static obj: BootcampModelBuilder;
     private constructor() {
-        this.bootcampSchema = this.getSchema();
-        this.hookInit();
+        const modelName = 'Bootcamp';
+        super(modelName);
         this.virtualInit();
     }
 
-    private getSchema() {
+    protected getSchema() {
         return new Schema<IBootcamp>({
             name: {
                 type: String,
@@ -123,19 +121,26 @@ class BootcampModel {
         });
     }
 
-    private hookInit() {
-        this.preSave();
-        this.preRemove();
+    protected hookInit() {
+        this
+            .generateSlug()
+            .getGeocodeAddress()
+            .deleteBootcampCoursesOnRemove();
+
+        return this;
     }
 
-    private preSave() {
-        this.bootcampSchema.pre('save', function (next) {
+    private generateSlug(): this {
+        this.schema.pre('save', function (next) {
             this.slug = slugify(this.name, { lower: true });
             next();
         });
 
+        return this;
+    }
 
-        this.bootcampSchema.pre('save', async function (next) {
+    private getGeocodeAddress(): this {
+        this.schema.pre('save', async function (next) {
             const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${this.address}&format=json&addressdetails=1`);
 
             const data = await response.json();
@@ -157,35 +162,36 @@ class BootcampModel {
             }
             next();
         })
+        return this;
     }
 
-    private preRemove() {
-        this.bootcampSchema.pre('remove', { document: true, query: false }, async function (next) {
+
+    private deleteBootcampCoursesOnRemove(): this {
+        this.schema.pre('remove', { document: true, query: false }, async function (next) {
             await Cource.deleteMany({ bootcamp: this.id })
             next();
         })
+        return this;
     }
 
     private virtualInit() {
-        this.bootcampSchema.virtual('courses', {
+        this.schema.virtual('courses', {
             ref: 'Course',
             localField: '_id',
             foreignField: 'bootcamp',
             justOne: false
         })
+
+        return this;
     }
 
-    private createModel() {
-        return mongoose.model<IBootcamp>('Bootcamp', this.bootcampSchema);
-    }
-
-    public static getInstance(): BootcampModel {
-        if (!this.instance) {
-            this.instance = new BootcampModel();
+    public static getInstance(): BootcampModelBuilder {
+        if (!this.obj) {
+            this.obj = new BootcampModelBuilder();
         }
-        return this.instance;
+        return this.obj;
     }
 }
 
-const Bootcamp = BootcampModel.getInstance().getModel();
+const Bootcamp = BootcampModelBuilder.getInstance().getModel();
 export default Bootcamp;

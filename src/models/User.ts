@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import IUser from '../types/models/User';
 import envHelper from '../utils/getEnv';
+import AbstractModel from './AbstractModel';
 
 interface IUserMethods {
     getSignedJwtToken: () => string;
@@ -13,17 +14,14 @@ interface IUserMethods {
 
 type UserModelType = Model<IUser, {}, IUserMethods>;
 
-class UserModel {
-    private userSchema;
-    private static instance: UserModel;
-
+class UserModelBuilder extends AbstractModel<IUser, UserModelType, IUserMethods> {
+    private static obj: UserModelBuilder;
     private constructor() {
-        this.userSchema = this.getSchema();
-        this.hookInit();
-        this.methodInit();
+        const modelName = 'User';
+        super(modelName);
     }
 
-    private getSchema() {
+    protected getSchema(): Schema<IUser, UserModelType, IUserMethods> {
         return new Schema<IUser, UserModelType, IUserMethods>({
             name: {
                 type: String,
@@ -58,18 +56,22 @@ class UserModel {
         });
     }
 
-    private hookInit() {
+    protected hookInit(): this {
         this.encryptPassword(); //Encrypt password using bcrypt
+        return this;
     }
 
-    private methodInit() {
-        this.getSignedJwtToken();
-        this.matchPassword();
-        this.getResetPasswordToken();
+    protected methodInit(): this {
+        this
+            .getSignedJwtToken()
+            .matchPassword()
+            .getResetPasswordToken();
+
+        return this;
     }
 
-    private encryptPassword(): void {
-        this.userSchema.pre('save', async function (next) {
+    private encryptPassword(): this {
+        this.schema.pre('save', async function (next) {
             if (!this.isModified('password')) {
                 next();
             }
@@ -77,41 +79,41 @@ class UserModel {
             this.password = await bcrypt.hash(this.password, salt);
             next();
         })
+        return this;
     }
 
-    private getSignedJwtToken(): void {
-        this.userSchema.methods.getSignedJwtToken = function () {
+    private getSignedJwtToken(): this {
+        this.schema.methods.getSignedJwtToken = function () {
             return jwt.sign({ id: this._id }, envHelper.getEnv<string>("JWT_SECRET"), {
                 expiresIn: envHelper.getEnv("JWT_EXPIRE")
             });
         }
+        return this;
     }
 
-    private matchPassword(): void {
-        this.userSchema.methods.matchPassword = async function (enteredPassword: string) {
+    private matchPassword(): this {
+        this.schema.methods.matchPassword = async function (enteredPassword: string) {
             return await bcrypt.compare(enteredPassword, this.password)
         }
+        return this;
     }
 
-    private getResetPasswordToken(): void {
-        this.userSchema.methods.getResetPasswordToken = function () {
+    private getResetPasswordToken(): this {
+        this.schema.methods.getResetPasswordToken = function () {
             const resetToken = crypto.randomBytes(32).toString('hex');
             this.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
             this.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
             return resetToken;
         }
+        return this;
     }
 
-    public getModel() {
-        return model<IUser, UserModelType>('User', this.userSchema);
-    }
-
-    public static getInstance(): UserModel {
-        if (!this.instance) {
-            this.instance = new UserModel();
+    public static getInstance(): UserModelBuilder {
+        if (!this.obj) {
+            this.obj = new UserModelBuilder();
         }
-        return this.instance;
+        return this.obj;
     }
 }
-const User = UserModel.getInstance().getModel();
+const User = UserModelBuilder.getInstance().getModel();
 export default User;

@@ -10,7 +10,8 @@ interface IReviewModel extends Model<IReview> {
 class ReviewModelBuilder extends AbstractModel<IReview, IReviewModel, {}> {
     private static obj: ReviewModelBuilder;
     private constructor() {
-        super();
+        const modelName = 'Review';
+        super(modelName);
         this.addIndexing();
     }
 
@@ -86,7 +87,34 @@ class ReviewModelBuilder extends AbstractModel<IReview, IReviewModel, {}> {
         return this;
     }
 
-    protected staticsInit() {
+    protected staticsInit(): this {
+        this.getAverageRating();
+        return this;
+    }
+
+    protected hookInit(): this {
+        this.updateAverageRatingOnSave().updateAverageRatingOnRemove();
+        return this;
+    }
+
+    private updateAverageRatingOnSave(): this {
+        this.schema.post('save', async function () {
+            await Review.getAverageRating(this.bootcamp);
+        })
+
+        return this;
+    }
+
+    private updateAverageRatingOnRemove(): this {
+        this.schema.pre('remove', { document: true, query: false }, async function () {
+            await Review.getAverageRating(this.bootcamp);
+        })
+
+        return this;
+    }
+
+
+    private getAverageRating(): this {
         this.schema.statics.getAverageRating = async function (bootcampId: string) {
             try {
                 const obj = await this.aggregate([
@@ -110,28 +138,10 @@ class ReviewModelBuilder extends AbstractModel<IReview, IReviewModel, {}> {
                 console.log(error);
             }
         }
+
         return this;
     }
 
-    protected hookInit() {
-        this.schema.post('save', async function () {
-            await Review.getAverageRating(this.bootcamp);
-
-        })
-
-        this.schema.pre('remove', { document: true, query: false }, async function () {
-            await Review.getAverageRating(this.bootcamp);
-        })
-        return this;
-    }
-
-    protected methodInit(): this {
-        return this;
-    }
-
-    protected createModel() {
-        return model<IReview, IReviewModel>('Review', this.schema);
-    }
 
     public static getInstance(): ReviewModelBuilder {
         if (!this.obj) {

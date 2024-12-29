@@ -1,22 +1,24 @@
-import { Model, Schema } from "mongoose";
+import { model, Model, Schema } from "mongoose";
 
 // IUser,IUserModel,IUserMethods
 export default abstract class AbstractModel<T, U, V> {
     protected schema: Schema<T, U, V>;
     protected model: U;
 
-    constructor() {
+    constructor(modelName: string) {
         this.schema = this.getSchema();
-        this.staticsInit().hookInit().methodInit();
-        this.model = this.createModel();
+        this
+            .staticsInit()
+            .hookInit()
+            .methodInit();
+        this.model = model<T, U>(modelName, this.schema);
     }
 
     protected abstract getSchema(): Schema<T, U, V>;
-    protected abstract staticsInit(): this;
-    protected abstract hookInit(): this;
-    protected abstract methodInit(): this;
+    protected staticsInit(): this { return this; };
+    protected hookInit(): this { return this; };
+    protected methodInit(): this { return this; };
 
-    protected abstract createModel(): U;
     public getModel(): U {
         return this.model;
     }

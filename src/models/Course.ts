@@ -1,23 +1,21 @@
 import mongoose, { model, Model, Schema } from 'mongoose';
 import Bootcamp from './Bootcamp';
 import ICourse from '../types/models/Course';
+import AbstractModel from './AbstractModel';
 
 // register the statics methods
 interface ICourseModel extends Model<ICourse> {
     getAverageCost(bootcampId: string): Promise<void>;
 }
 
-class CourseModel {
-    private courseSchema;
-    private static instance: CourseModel;
-
+class CourseModelBuilder extends AbstractModel<ICourse, ICourseModel, {}> {
+    private static obj: CourseModelBuilder;
     private constructor() {
-        this.courseSchema = this.getSchema();
-        this.staticsInit();
-        this.hookInit();
+        const modelName = 'Course';
+        super(modelName);
     }
 
-    private getSchema() {
+    protected getSchema(): Schema<ICourse, ICourseModel> {
         return new Schema<ICourse, ICourseModel>({
             title: {
                 type: String,
@@ -61,25 +59,35 @@ class CourseModel {
             },
         });
     }
-    private hookInit() {
-        this.postSave();
-        this.preRemove();
+
+    protected hookInit(): this {
+        this.updateAverageRatingOnSave().updateAverageRatingOnRemove();
+        return this;
     }
 
-    private postSave() {
-        this.courseSchema.post('save', async function () {
-            Course.getAverageCost(this.bootcamp);
+    private updateAverageRatingOnSave(): this {
+        this.schema.post('save', async function () {
+            await Course.getAverageCost(this.bootcamp);
         })
+
+        return this;
     }
 
-    private preRemove() {
-        this.courseSchema.pre('remove', { document: true, query: false }, async function () {
-            Course.getAverageCost(this.bootcamp);
+    private updateAverageRatingOnRemove(): this {
+        this.schema.pre('remove', { document: true, query: false }, async function () {
+            await Course.getAverageCost(this.bootcamp);
         })
+
+        return this;
     }
 
-    private staticsInit() {
-        this.courseSchema.statics.getAverageCost = async function (bootcampId: string): Promise<void> {
+    protected staticsInit(): this {
+        this.getAverageCost();
+        return this;
+    }
+
+    private getAverageCost(): this {
+        this.schema.statics.getAverageCost = async function (bootcampId: string): Promise<void> {
             try {
                 const obj = await this.aggregate([
                     {
@@ -102,20 +110,17 @@ class CourseModel {
                 console.log(error);
             }
         }
+        return this;
     }
 
-    public getModel() {
-        return mongoose.model<ICourse, ICourseModel>('Course', this.courseSchema);
-    }
-
-    public static getInstance(): CourseModel {
-        if (!this.instance) {
-            this.instance = new CourseModel();
+    public static getInstance(): CourseModelBuilder {
+        if (!this.obj) {
+            this.obj = new CourseModelBuilder();
         }
-        return this.instance;
+        return this.obj;
     }
 }
 
-const Course = CourseModel.getInstance().getModel();
+const Course = CourseModelBuilder.getInstance().getModel();
 export default Course;
 
