@@ -6,7 +6,7 @@ import IUser from '../types/models/User';
 import envHelper from '../utils/getEnv';
 import AbstractModel from './AbstractModel';
 
-interface IUserMethods {
+export interface IUserMethods {
     getSignedJwtToken: () => string;
     matchPassword: (enteredPassword: string) => Promise<boolean>;
     getResetPasswordToken: () => string;

@@ -1,8 +1,9 @@
 import ErrorResponse from "../utils/errorResponse";
-import asyncHandler from "./async";
+import asyncHandler from "./asyncHandler";
 import User from '../models/User';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { Request, Response, NextFunction } from "express";
+import IUser from "../types/models/User";
 
 export default class AuthMiddleware {
     private isUserFound(user: IUser) {

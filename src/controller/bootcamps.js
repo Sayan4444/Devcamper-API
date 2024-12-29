@@ -1,6 +1,6 @@
 const Bootcamp = require('../models/Bootcamp');
 const ErrorResponse = require('../utils/errorResponse');
-const asyncHandler = require('../Middleware/async');
+const asyncHandler = require('../Middleware/asyncHandler');
 
 // @desc   Get all bootcamps
 // @route /api/v1/bootcamps

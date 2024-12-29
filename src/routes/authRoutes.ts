@@ -1,4 +1,4 @@
-import { register, login, getMe, forgotPassword, resetPassword, updateDetails, updatePassword, logout } from '../controller/auth';
+import authController from '../controller/auth';
 import BaseRoutes from './BaseRoutes';
 
 export default class AuthRoutes extends BaseRoutes {
@@ -8,13 +8,13 @@ export default class AuthRoutes extends BaseRoutes {
     protected initializeRoutes(): void {
         const { protect } = this.authMiddleware;
 
-        this.router.post('/register', register);
-        this.router.post('/login', login);
-        this.router.get('/logout', logout);
-        this.router.get('/me', protect, getMe);
-        this.router.put('/updatedetails', protect, updateDetails);
-        this.router.put('/updatepassword', protect, updatePassword);
-        this.router.post('/forgotpassword', forgotPassword);
-        this.router.put('/resetpassword/:resettoken', resetPassword);
+        this.router.post('/register', authController.register);
+        this.router.post('/login', authController.login);
+        this.router.get('/logout', authController.logout);
+        this.router.get('/me', protect, authController.getMe);
+        this.router.put('/updatedetails', protect, authController.updateDetails);
+        this.router.put('/updatepassword', protect, authController.updatePassword);
+        this.router.post('/forgotpassword', authController.forgotPassword);
+        this.router.put('/resetpassword/:resettoken', authController.resetPassword);
     }
 }
