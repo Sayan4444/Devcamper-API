@@ -179,10 +179,10 @@ const sendTokenResponse = (user: IUserDocument, statusCode: number, res: Respons
     const token = user.getSignedJwtToken();
 
     const options: CookieOptions = {
-        expires: new Date(Date.now() + envHelper.getEnvNum("JWT_COOKIE_EXPIRE") * 24 * 60 * 60 * 1000),
+        expires: new Date(Date.now() + envHelper.getEnv<number>("JWT_COOKIE_EXPIRE") * 24 * 60 * 60 * 1000),
         httpOnly: true,
     }
-    if (process.env.NODE_ENV === 'Production') {
+    if (envHelper.getEnv("NODE_ENV") === 'Production') {
         options.secure = true;
     }
     res

@@ -12,17 +12,17 @@ interface IUserMethods {
     getResetPasswordToken: () => string;
 }
 
-type UserModelType = Model<IUser, {}, IUserMethods>;
+interface IUserModel extends Model<IUser, {}, IUserMethods> { }
 
-class UserModelBuilder extends AbstractModel<IUser, UserModelType, IUserMethods> {
+class UserModelBuilder extends AbstractModel<IUser, IUserModel, IUserMethods> {
     private static obj: UserModelBuilder;
     private constructor() {
         const modelName = 'User';
         super(modelName);
     }
 
-    protected getSchema(): Schema<IUser, UserModelType, IUserMethods> {
-        return new Schema<IUser, UserModelType, IUserMethods>({
+    protected getSchema(): Schema<IUser, IUserModel, IUserMethods> {
+        return new Schema<IUser, IUserModel, IUserMethods>({
             name: {
                 type: String,
                 required: [true, 'Please add a name']

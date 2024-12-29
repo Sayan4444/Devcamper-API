@@ -5,7 +5,10 @@ import Cource from './Course';
 import IBootcamp from '../types/models/Bootcamp';
 import AbstractModel from './AbstractModel';
 
-class BootcampModelBuilder extends AbstractModel<IBootcamp, Model<IBootcamp>, {}> {
+interface IBootcampModel extends Model<IBootcamp> {
+}
+
+class BootcampModelBuilder extends AbstractModel<IBootcamp, IBootcampModel, {}> {
     private static obj: BootcampModelBuilder;
     private constructor() {
         const modelName = 'Bootcamp';
