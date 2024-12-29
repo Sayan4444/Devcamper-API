@@ -1,23 +1,52 @@
-import mongoose, { Model, Schema } from 'mongoose';
+import mongoose, { model, Model, Schema } from 'mongoose';
 import IReview from '../types/models/Review';
 import Bootcamp from './Bootcamp';
+import AbstractModel from './AbstractModel';
 
 interface IReviewModel extends Model<IReview> {
     getAverageRating(bootcampId: string): Promise<void>;
 }
 
-class ReviewModel {
-    private reviewSchema;
-    private static instance: ReviewModel;
-
+class ReviewModelBuilder extends AbstractModel<IReview, IReviewModel, {}> {
+    private static obj: ReviewModelBuilder;
     private constructor() {
-        this.reviewSchema = this.getSchema();
+        super();
         this.addIndexing();
-        this.staticsInit();
-        this.hookInit();
     }
 
-    private getSchema() {
+    protected getSchema(): Schema<IReview, IReviewModel> {
+        return new Schema<IReview, IReviewModel>({
+            title: {
+                type: String,
+                trim: true,
+                required: [true, 'Please add a title for the review'],
+                maxlength: 100
+            },
+            text: {
+                type: String,
+                required: [true, 'Please add a some text']
+            },
+            rating: {
+                type: Number,
+                min: 1,
+                max: 10,
+                required: [true, 'Please add rating between 1 and 10']
+            },
+            createdAt: {
+                type: Date,
+                default: Date.now
+            },
+            bootcamp: {
+                type: mongoose.Types.ObjectId,
+                ref: 'Bootcamp',
+                required: true
+            },
+            user: {
+                type: mongoose.Types.ObjectId,
+                ref: 'User',
+                required: true
+            },
+        });
         return new Schema<IReview, IReviewModel>({
             title: {
                 type: String,
@@ -52,12 +81,13 @@ class ReviewModel {
         });
     }
     //Prevent user from submitting more than one review per bootcamp
-    private addIndexing() {
-        this.reviewSchema.index({ bootcamp: 1, user: 1 }, { unique: true });
+    private addIndexing(): this {
+        this.schema.index({ bootcamp: 1, user: 1 }, { unique: true });
+        return this;
     }
 
-    private staticsInit() {
-        this.reviewSchema.statics.getAverageRating = async function (bootcampId: string) {
+    protected staticsInit() {
+        this.schema.statics.getAverageRating = async function (bootcampId: string) {
             try {
                 const obj = await this.aggregate([
                     {
@@ -80,29 +110,37 @@ class ReviewModel {
                 console.log(error);
             }
         }
+        return this;
     }
 
-    private hookInit() {
-        this.reviewSchema.post('save', async function () {
+    protected hookInit() {
+        this.schema.post('save', async function () {
             await Review.getAverageRating(this.bootcamp);
+
         })
 
-        this.reviewSchema.pre('remove', { document: true, query: false }, async function () {
+        this.schema.pre('remove', { document: true, query: false }, async function () {
             await Review.getAverageRating(this.bootcamp);
         })
+        return this;
     }
 
-    public getModel() {
-        return mongoose.model<IReview, IReviewModel>('Review', this.reviewSchema);
+    protected methodInit(): this {
+        return this;
     }
 
-    public static getInstance(): ReviewModel {
-        if (!this.instance) {
-            this.instance = new ReviewModel();
+    protected createModel() {
+        return model<IReview, IReviewModel>('Review', this.schema);
+    }
+
+    public static getInstance(): ReviewModelBuilder {
+        if (!this.obj) {
+            this.obj = new ReviewModelBuilder();
         }
-        return this.instance;
+        return this.obj;
     }
+
 }
 
-const Review = ReviewModel.getInstance().getModel();
+const Review = ReviewModelBuilder.getInstance().getModel();
 export default Review;

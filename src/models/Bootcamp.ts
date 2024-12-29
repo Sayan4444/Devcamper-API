@@ -6,6 +6,7 @@ import IBootcamp from '../types/models/Bootcamp';
 
 class BootcampModel {
     private bootcampSchema;
+    private bootcampModel;
     private static instance: BootcampModel;
 
     private constructor() {
@@ -13,6 +14,7 @@ class BootcampModel {
         this.hookInit();
         this.virtualInit();
     }
+
     private getSchema() {
         return new Schema<IBootcamp>({
             name: {
@@ -120,6 +122,7 @@ class BootcampModel {
             toObject: { virtuals: true }
         });
     }
+
     private hookInit() {
         this.preSave();
         this.preRemove();
@@ -172,7 +175,7 @@ class BootcampModel {
         })
     }
 
-    public getModel() {
+    private createModel() {
         return mongoose.model<IBootcamp>('Bootcamp', this.bootcampSchema);
     }
 

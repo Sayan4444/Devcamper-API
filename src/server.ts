@@ -25,13 +25,13 @@ export default class ApiServer {
 
     constructor() {
         this.app = express();
-        this.port = envHelper.getEnvNum('PORT');
+        this.port = envHelper.getEnv<number>('PORT');
 
         this.loadEnvVariables();
         this.initializeMiddlewares();
         this.mountRoutes();
 
-        this.db = new Database(envHelper.getEnvStr('MONGO_URI'));
+        this.db = new Database(envHelper.getEnv('MONGO_URI'));
 
         this.initializeErrorHandling();
     }
@@ -54,7 +54,7 @@ export default class ApiServer {
         this.app.use(limiter); // Apply the rate limiting middleware to all requests
         this.app.use(hpp()); //Prevent http param pollution
 
-        if (envHelper.getEnvStr("NODE_ENV") === 'development') {
+        if (envHelper.getEnv("NODE_ENV") === 'development') {
             this.app.use(morgan('dev'));
         }
 

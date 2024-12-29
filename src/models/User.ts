@@ -24,7 +24,7 @@ class UserModel {
     }
 
     private getSchema() {
-        return new Schema<IUser, UserModel, IUserMethods>({
+        return new Schema<IUser, UserModelType, IUserMethods>({
             name: {
                 type: String,
                 required: [true, 'Please add a name']
@@ -81,8 +81,8 @@ class UserModel {
 
     private getSignedJwtToken(): void {
         this.userSchema.methods.getSignedJwtToken = function () {
-            return jwt.sign({ id: this._id }, envHelper.getEnvStr("JWT_SECRET"), {
-                expiresIn: envHelper.getEnvStr("JWT_EXPIRE")
+            return jwt.sign({ id: this._id }, envHelper.getEnv<string>("JWT_SECRET"), {
+                expiresIn: envHelper.getEnv("JWT_EXPIRE")
             });
         }
     }
