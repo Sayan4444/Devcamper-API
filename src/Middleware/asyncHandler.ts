@@ -1,11 +1,15 @@
 import { Request, Response, NextFunction } from "express";
 
-interface IAsyncHandler {
-    (req: Request, res: Response, next: NextFunction): Promise<void>;
+// A=QueryParams(":"),
+// B=ResponseBody,
+// C=RequestBody,
+// D=QueryParams("?"),
+interface IAsyncHandler<A = any, B = any, C = any, D = any> {
+    (req: Request<A, B, C, D>, res: Response, next: NextFunction): Promise<void>;
 }
 
-const asyncHandler = (fn: IAsyncHandler) => {
-    return (req: Request, res: Response, next: NextFunction): void => {
+const asyncHandler = <A = any, B = any, C = any, D = any>(fn: IAsyncHandler<A, B, C, D>) => {
+    return (req: Request<A, B, C, D>, res: Response, next: NextFunction): void => {
         fn(req, res, next).catch(err => next(err));
     };
 };

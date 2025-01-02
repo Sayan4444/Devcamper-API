@@ -13,7 +13,7 @@ import IUser from '../types/models/User';
 class AuthController {
     // @desc   Register user
     // @route  POST /api/v1/auth/register
-    public register = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    public register = asyncHandler(async (req: Request<{}, Pick<IUser, 'name' | 'email' | 'password' | 'role'>>, res: Response, next: NextFunction) => {
         const { name, email, password, role } = req.body;
 
         const user = await User.create({ name, email, password, role })
@@ -23,7 +23,7 @@ class AuthController {
 
     // @desc   Login user
     // @route  POST /api/v1/auth/login
-    public login = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    public login = asyncHandler(async (req: Request<{}, Pick<IUser, 'email' | 'password'>>, res: Response, next: NextFunction) => {
         const { email, password } = req.body;
 
         //Validate email and password
@@ -69,7 +69,7 @@ class AuthController {
 
     // @desc   Update user details(name,email)
     // @route  PUT /api/v1/auth/updatedetails
-    public updateDetails = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    public updateDetails = asyncHandler(async (req: Request<{}, Pick<IUser, 'name' | 'email'>>, res: Response, next: NextFunction) => {
         const fieldsToUpdate = {
             name: req.body.name,
             email: req.body.email,
@@ -86,8 +86,8 @@ class AuthController {
 
     // @desc   Update password
     // @route  POST /api/v1/auth/updatepassword
-    public updatePassword = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-        const user = await User.findById(req.user.id).select('password');
+    public updatePassword = asyncHandler(async (req: Request<{}, { currentPassword: string, newPassword: string }>, res: Response, next: NextFunction) => {
+        const user = await User.findById(req.user!.id).select('password');
 
         if (!user) {
             return next(new ErrorResponse('User not found', 404));
@@ -144,7 +144,7 @@ class AuthController {
 
     // @desc   Reset password
     // @route  POST /api/v1/auth/resetpassword/:resettoken
-    public resetPassword = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    public resetPassword = asyncHandler(async (req: Request<{ resettoken: string }>, res: Response, next: NextFunction) => {
         //Get hashed token
         const resetToken = req.params.resettoken;
         const resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
