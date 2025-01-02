@@ -4,6 +4,7 @@ import advancedResults from '../Middleware/advancedResults';
 import BaseRoutes from './BaseRoutes';
 
 export default class UserRoutes extends BaseRoutes {
+    private static obj: UserRoutes;
     constructor() {
         super();
     }
@@ -23,5 +24,11 @@ export default class UserRoutes extends BaseRoutes {
             .get(userController.getUser)
             .put(userController.updateUser)
             .delete(userController.deleteUser);
+    }
+    public static getInstance(): UserRoutes {
+        if (!this.obj) {
+            this.obj = new UserRoutes();
+        }
+        return this.obj;
     }
 }

@@ -43,7 +43,7 @@ class CoursesController {
 
     // @desc   Add course
     // @route  POST /api/v1/bootcamps/:bootcampId/courses
-    public addCourse = asyncHandler(async (req: Request<BootcampIdParams, {}, ICourse>, res: Response, next: NextFunction) => {
+    public addCourse = asyncHandler(async (req: Request<Partial<BootcampIdParams>, {}, ICourse>, res: Response, next: NextFunction) => {
         const bootcamp = await Bootcamp.findById(req.params.bootcampId)
         if (!bootcamp) {
             return next(new ErrorResponse(`No bootcamp by the id ${req.params.bootcampId}`, 404));
@@ -52,7 +52,7 @@ class CoursesController {
         req.body.user = req.user!.id;
 
         if (bootcamp.user.toString() !== req.user!.id && req.user!.role !== 'admin') {
-            return next(new ErrorResponse(`User ${req.user!.id} is not authorized to add a course to bootcamp ${bootcamp._id}`, 401));
+            next(new ErrorResponse(`User ${req.user!.id} is not authorized to add a course to bootcamp ${bootcamp._id}`, 401));
         }
 
         const course = await Course.create(req.body)
@@ -82,8 +82,6 @@ class CoursesController {
     })
     // @desc   Delete course
     // @route  DELETE /api/v1/courses/:id
-    // @access Private
-
     public deleteCourse = asyncHandler(async (req: Request<IdParams>, res: Response, next: NextFunction) => {
         const course = await Course.findById(req.params.id);
         if (!course) {

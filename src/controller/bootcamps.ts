@@ -4,16 +4,7 @@ import asyncHandler from '../Middleware/asyncHandler';
 import { Request, Response, NextFunction } from 'express';
 import envHelper from '../utils/getEnv';
 import IBootcamp from '../types/models/Bootcamp';
-
-interface IdParams {
-    id: string;
-}
-
-interface bootcampRadiusParams {
-    zipcode: number;
-    distance: number;
-}
-
+import { IdParams, bootcampRadiusParams } from '../types/controller';
 
 class BootcampController {
 

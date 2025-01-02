@@ -2,6 +2,7 @@ import authController from '../controller/auth';
 import BaseRoutes from './BaseRoutes';
 
 export default class AuthRoutes extends BaseRoutes {
+    private static obj: AuthRoutes;
     constructor() {
         super();
     }
@@ -16,5 +17,12 @@ export default class AuthRoutes extends BaseRoutes {
         this.router.put('/updatepassword', protect, authController.updatePassword);
         this.router.post('/forgotpassword', authController.forgotPassword);
         this.router.put('/resetpassword/:resettoken', authController.resetPassword);
+    }
+
+    public static getInstance(): AuthRoutes {
+        if (!this.obj) {
+            this.obj = new AuthRoutes();
+        }
+        return this.obj;
     }
 }

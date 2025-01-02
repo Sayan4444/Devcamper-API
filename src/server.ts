@@ -63,17 +63,11 @@ export default class ApiServer {
     }
 
     private mountRoutes(): void {
-        const bootcampRoutes = new BootcampRoutes();
-        const courseRoutes = new CourseRoutes();
-        const authRoutes = new AuthRoutes();
-        const userRoutes = new UserRoutes();
-        const reviewRoutes = new ReviewRoutes();
-
-        this.app.use('/api/v1/bootcamps', bootcampRoutes.getRouter());
-        this.app.use('/api/v1/courses', courseRoutes.getRouter());
-        this.app.use('/api/v1/auth', authRoutes.getRouter());
-        this.app.use('/api/v1/users', userRoutes.getRouter());
-        this.app.use('/api/v1/reviews', reviewRoutes.getRouter());
+        this.app.use('/api/v1/bootcamps', BootcampRoutes.getInstance().getRouter());
+        this.app.use('/api/v1/courses', CourseRoutes.getInstance().getRouter());
+        this.app.use('/api/v1/auth', AuthRoutes.getInstance().getRouter());
+        this.app.use('/api/v1/users', UserRoutes.getInstance().getRouter());
+        this.app.use('/api/v1/reviews', ReviewRoutes.getInstance().getRouter());
     }
 
     private initializeErrorHandling(): void {

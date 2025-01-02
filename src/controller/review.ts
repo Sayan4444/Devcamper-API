@@ -47,7 +47,7 @@ class ReviewController {
     // @route  POST /api/v1/bootcamps/:bootcampId/reviews
     // @access public
 
-    public addReview = asyncHandler(async (req: Request<BootcampIdParams, {}, IReview>, res: Response, next: NextFunction) => {
+    public addReview = asyncHandler(async (req: Request<Partial<BootcampIdParams>, {}, IReview>, res: Response, next: NextFunction) => {
         req.body.bootcamp = req.params.bootcampId;
         req.body.user = req.user!.id;
 
@@ -113,5 +113,5 @@ class ReviewController {
 }
 
 const reviewController = new ReviewController();
-export default ReviewController;
+export default reviewController;
 

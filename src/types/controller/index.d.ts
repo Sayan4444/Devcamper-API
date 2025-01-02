@@ -4,3 +4,8 @@ export interface IdParams {
 export interface BootcampIdParams {
     bootcampId: string;
 }
+
+export interface bootcampRadiusParams {
+    zipcode: number;
+    distance: number;
+}
